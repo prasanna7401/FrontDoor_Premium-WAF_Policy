@@ -1,4 +1,4 @@
-resource "azurerm_resource_group" "rg01" {
+resource "azurerm_resource_group" "prod_rg" {
   location = var.location
   name     = var.resource_group
   tags     = var.tags
@@ -7,20 +7,9 @@ resource "azurerm_resource_group" "rg01" {
   }
 }
 
-resource "azurerm_cdn_frontdoor_profile" "fd01" {
-  name                     = var.fd_name
-  resource_group_name      = var.resource_group
-  response_timeout_seconds = 60
-  sku_name                 = var.fd_sku
-  tags                     = var.tags
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "azurerm_cdn_frontdoor_firewall_policy" "testpolicy01" {
+resource "azurerm_cdn_frontdoor_firewall_policy" "prod_policy" {
   name                = var.waf_name
-  resource_group_name = var.resource_group
+  resource_group_name = azurerm_resource_group.prod_rg.name
   sku_name            = var.fd_sku
   mode                = var.waf_mode
   tags                = var.tags

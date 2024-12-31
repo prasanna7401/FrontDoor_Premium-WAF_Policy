@@ -2,26 +2,26 @@
 custom_rules = [
 # ALLOW IP SET
   {
-    action                         = "Allow"
-    enabled                        = true
-    name                           = "AllowedIPs"
-    priority                       = 101
-    rate_limit_duration_in_minutes = 1
-    rate_limit_threshold           = 100
-    type                           = "MatchRule"
-    match_conditions = [
-      {
-        # IPs to allow
-        match_values       = [
-            "100.100.100.100", "200.200.200.200", "201.201.0.0/16"
+        action                         = "Allow"
+        enabled                        = true
+        name                           = "AllowedIPs"
+        priority                       = 101
+        rate_limit_duration_in_minutes = 1
+        rate_limit_threshold           = 100
+        type                           = "MatchRule"
+
+        match_conditions = [
+          {
+            match_values       = [
+                "8.8.8.8",
             ]
-        match_variable     = "RemoteAddr"
-        negation_condition = false
-        operator           = "IPMatch"
-        transforms         = []
-      }
-    ]
-  },
+            match_variable     = "RemoteAddr"
+            negation_condition = false
+            operator           = "IPMatch"
+            transforms         = []
+        }
+        ] 
+    },
 # ALLOW GEOGRAPHY SET
   {
     action                         = "Allow"
@@ -100,25 +100,28 @@ custom_rules = [
     ]
   },
 # Block GEOGRAPHY SET
-  {
-    action                         = "Block"
-    enabled                        = true
-    name                           = "BlockedCountries"
-    priority                       = 105
-    rate_limit_duration_in_minutes = 1
-    rate_limit_threshold           = 100
-    type                           = "MatchRule"
-    match_conditions = [
-      {
-        match_values       = ["CN", "RU"]
-        match_variable     = "SocketAddr"
-        negation_condition = false
-        operator           = "GeoMatch"
-        transforms         = []
-      }
-    ]
-  },
-# Others - if required
+{
+        action                         = "Block"
+        enabled                        = true
+        name                           = "BlockedCountries"
+        priority                       = 104
+        rate_limit_duration_in_minutes = 1
+        rate_limit_threshold           = 100
+        type                           = "MatchRule"
+
+        match_conditions = [{
+            match_values       = [
+                "CN",
+                "RU",
+            ]
+            match_variable     = "SocketAddr"
+            negation_condition = false
+            operator           = "GeoMatch"
+            transforms         = []
+        }]
+    },
+# # Others - if required
+  
 ]
 
 # Microsoft Default Rule Sets
@@ -127,10 +130,10 @@ managed_rules = [
     action  = "Block"
     type    = "Microsoft_DefaultRuleSet"
     version = "2.1"
-  }
+  },
   {
     action  = "Log"
     type    = "Microsoft_BotManagerRuleSet"
-    version = "1.0"
+    version = "1.1"
   }
 ]
