@@ -1,6 +1,8 @@
 waf_name = "<your-waf-name>"
 fd_name  = "<your-fd-name>"
 
+#midhun
+
 resource_group = "<your-resource-group>"
 location       = "<your-location>"
 
