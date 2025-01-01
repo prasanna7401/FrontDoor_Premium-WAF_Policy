@@ -1,9 +1,6 @@
 waf_name = "<your-waf-name>"
 fd_name  = "<your-fd-name>"
 
-
-
-
 resource_group = "<your-resource-group>"
 location       = "<your-location>"
 
