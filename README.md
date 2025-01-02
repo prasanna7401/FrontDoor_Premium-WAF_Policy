@@ -17,9 +17,10 @@ Update the tfvars file based on the environment:
 
 ## How to?
 
-1. Update rules:
+### 1. Update rules:
     - to be filled later
-2. How to add/manage a new WAF policy?
+#### 2. How to add/manage a new WAF policy?
+
     Step-1: Add a the following in each code, by copy-pasting the other waf content in accordance with your new WAF policy name.
     - a new module in `main.tf`
     - a variable definition in `variables.tf`
@@ -35,7 +36,7 @@ Update the tfvars file based on the environment:
 
     Step-3: Add/update the `-var-file=rules/<NEW_WAF_RULES>.tfvars` to every `plan` and `apply` steps in the pipeline.
 
-### Special note
+## Special note
 
 - If you would like to use this code to manage existing FD WAF, you should run `terraform import` to update your statefile, and have only required attributes.
 
