@@ -1,6 +1,6 @@
 # Azure FrontDoor Premium - Web Application Firewall Policy management
 
-## 1. Recommended WAF Custom Rule structure for easy management
+## Recommended WAF Custom Rule structure for easy management
 
 1. AllowedIPs
 2. AllowedCountries
@@ -30,7 +30,7 @@ Update the tfvars file based on the environment:
     ```sh
     tf import -var-file="<WAF_RULE_1.tfvars>" -var-file="<WAF_RULE_2.tfvars>" ... module.<NEW_WAF_MODULE_NAME>.azurerm_cdn_frontdoor_firewall_policy.waf_policy <ARM_ID>
     ```
-    
+
     > Note: This import step needs to be run only once, when you want to import the configurations of an existing resource to get managed by terraform for the first time. Provide the backend storage container details as required.
 
     Step-3: Add/update the `-var-file=rules/<NEW_WAF_RULES>.tfvars` to every `plan` and `apply` steps in the pipeline.
