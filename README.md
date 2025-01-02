@@ -28,10 +28,9 @@ Update the tfvars file based on the environment:
     - a rule set in `rules/`, by importing the new device configuration to be managed by terraform. See below for importing procedures,
     
 **Step-2:** Import a new already-existing WAF policy configurations to statefile:
-    
-    ```sh
+```sh
     terraform import -var-file="<WAF_RULE_1.tfvars>" -var-file="<WAF_RULE_2.tfvars>" ... module.<NEW_WAF_MODULE_NAME>.azurerm_cdn_frontdoor_firewall_policy.waf_policy <ARM_ID>
-    ```
+```
 
 > Note: This import step needs to be run only once, when you want to import the configurations of an existing resource to get managed by terraform for the first time. Provide the backend storage container details as required.
 
