@@ -1,3 +1,77 @@
+### WAF POLICY Variables - add/update based on requirement ###
+
+### Just copy the <env>_waf_name and <env>_rules variables and update them based on your requirement
+
+variable "test_waf_name" {
+  type        = string
+  description = "The name of the WAF policy"
+}
+variable "test_rules" {
+  type = list(object({
+    action                         = string
+    enabled                        = bool
+    name                           = string
+    priority                       = number
+    rate_limit_duration_in_minutes = number
+    rate_limit_threshold           = number
+    type                           = string
+    match_conditions = list(object({
+      match_values       = list(string)
+      match_variable     = string
+      negation_condition = bool
+      operator           = string
+      transforms         = list(string)
+    }))
+  }))
+}
+
+##
+
+variable "prod_waf_name" {
+  type        = string
+  description = "The name of the WAF policy"
+}
+variable "prod_rules" {
+  type = list(object({
+    action                         = string
+    enabled                        = bool
+    name                           = string
+    priority                       = number
+    rate_limit_duration_in_minutes = number
+    rate_limit_threshold           = number
+    type                           = string
+    match_conditions = list(object({
+      match_values       = list(string)
+      match_variable     = string
+      negation_condition = bool
+      operator           = string
+      transforms         = list(string)
+    }))
+  }))
+}
+
+##### COMMON PROPERTIES #####
+
+variable "managed_rules" {
+  type = list(object({
+    action  = string
+    type    = string
+    version = string
+  }))
+  default = [
+    {
+      action  = "Block"
+      type    = "Microsoft_DefaultRuleSet"
+      version = "2.1"
+    },
+    {
+      action  = "Log"
+      type    = "Microsoft_BotManagerRuleSet"
+      version = "1.0"
+    }
+  ]
+}
+
 variable "resource_group" {
   type        = string
   description = "The name of the backend storage account resource group"
@@ -17,20 +91,10 @@ variable "tags" {
   }
 }
 
-variable "waf_name" {
-  type        = string
-  description = "The name of the WAF policy"
-}
-
 variable "waf_mode" {
   type        = string
   description = "The mode of the WAF policy"
   default     = "Prevention"
-}
-
-variable "fd_name" {
-  type        = string
-  description = "The name of the front door"
 }
 
 variable "fd_sku" {
@@ -38,69 +102,6 @@ variable "fd_sku" {
   description = "The SKU of the WAF policy"
   default     = "Premium_AzureFrontDoor"
 }
-
-variable "custom_rules" {
-  type        = list(object({
-    action                         = string
-    enabled                        = bool
-    name                           = string
-    priority                       = number
-    rate_limit_duration_in_minutes = number
-    rate_limit_threshold           = number
-    type                           = string
-    match_conditions               = list(object({
-      match_values       = list(string)
-      match_variable     = string
-      negation_condition = bool
-      operator           = string
-      transforms         = list(string)
-    }))
-  }))
-  description = "List of custom rules for the WAF policy"
-}
-
-variable "managed_rules" {
-  type        = list(object({
-    action  = string
-    type    = string
-    version = string
-  }))
-  description = "List of managed rules for the WAF policy"
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # variable "be_storage_account" {
 #   type        = string
@@ -119,8 +120,6 @@ variable "managed_rules" {
 #   description = "The access key for the storage account"
 #   default     = "testwaf01.terraform.tfstate"
 # }
-
-
 
 ################################################################
 # variable "subscription-id" {

@@ -1,17 +1,8 @@
-resource "azurerm_resource_group" "prod_rg" {
-  location = var.location
-  name     = var.resource_group
-  tags     = var.tags
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "azurerm_cdn_frontdoor_firewall_policy" "prod_policy" {
-  name                = var.waf_name
-  resource_group_name = azurerm_resource_group.prod_rg.name
-  sku_name            = var.fd_sku
-  mode                = var.waf_mode
+resource "azurerm_cdn_frontdoor_firewall_policy" "waf_policy" {
+  name                = var.policy_name
+  resource_group_name = var.resource_group_name
+  sku_name            = var.sku
+  mode                = var.mode
   tags                = var.tags
 
   dynamic "custom_rule" {
