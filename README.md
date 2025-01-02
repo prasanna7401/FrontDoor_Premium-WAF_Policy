@@ -12,8 +12,8 @@
 ## Manage rules
 
 Update the tfvars file based on the environment:
-1. [Dev](./policydev/waf_rules/custom_rules.tfvars)
-2. [Prod](./policyprod/waf_rules/custom_rules.tfvars)
+1. [Dev/Test](./rules/test_rules.tfvars)
+2. [Prod](./rules/prod_rules.tfvars)
 
 ## How to?
 
