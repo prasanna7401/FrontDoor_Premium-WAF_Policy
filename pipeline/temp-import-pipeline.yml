@@ -1,0 +1,115 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:                               # Define variables at the pipeline level - LATER
+  sc_name: 'WAF_TF'                      # CREATE
+  environment: 'waf-test'                # CREATE
+
+stages:
+  - stage: tfvalidate
+    displayName: 'Validate'
+    jobs:
+      - job: Validate
+        displayName: 'Validate Code'
+        continueOnError: false
+
+        steps:
+
+          - task: TerraformInstaller@1
+            displayName: 'Tf Install'
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: AzureCLI@2
+            displayName: Set TF Credentials
+            inputs:
+              azureSubscription: $(sc_name)
+              addSpnToEnvironment: true
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+                Write-Host "##vso[task.setvariable variable=ARM_CLIENT_ID]$env:servicePrincipalId"
+                Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$env:tenantId"
+
+          # Verify successful creation and configuration of the storage account with terraform state file
+          - task: AzureCLI@2
+            displayName: 'TF Init'
+            inputs:
+              azureSubscription: $(sc_name)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                terraform init 
+
+  - stage: tfimport
+    displayName: 'Import Resource config'
+    dependsOn: tfvalidate
+    condition: succeeded()
+    jobs:
+      - deployment: import_resource_state
+        displayName: 'Import Resource State'
+        environment: $(environment)
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps: 
+                - checkout: self
+                
+                - task: TerraformInstaller@1
+                  displayName: 'Tf Install'
+                  inputs:
+                    terraformVersion: 'latest'
+
+                - task: AzureCLI@2
+                  displayName: Set TF Credentials
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    addSpnToEnvironment: true
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                      Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+                      Write-Host "##vso[task.setvariable variable=ARM_CLIENT_ID]$env:servicePrincipalId"
+                      Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                      Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$env:tenantId"
+
+                - task: AzureCLI@2
+                  displayName: 'TF Init'
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      terraform init
+
+                # Provide your terraform import commands here
+                - task: AzureCLI@2
+                  displayName: 'TF Import '
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      #Write-Host "Importing Resource State of DEVTEST_WAF..."
+                      #terraform import -var-file="waf_rules/test_rules.tfvars" -var-file="waf_rules/prod_rules.tfvars" module.testpolicy01.azurerm_cdn_frontdoor_firewall_policy.waf_policy /subscriptions/<your-subscription-id>/resourcegroups/<your-resource-group>/providers/Microsoft.Network/frontdoorWebApplicationFirewallPolicies/<your-test-waf>
+
+                      #Write-Host "Importing Resource State of PROD_WAF..." 
+                      #terraform import -var-file="waf_rules/test_rules.tfvars" -var-file="waf_rules/prod_rules.tfvars" module.prodpolicy.azurerm_cdn_frontdoor_firewall_policy.waf_policy /subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group>/providers/Microsoft.Network/frontdoorWebApplicationFirewallPolicies/<your-prod-waf>
+
+                # Verifying the import of the resource state      
+                - task: AzureCLI@2
+                  displayName: 'TF Show'
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      terraform show
