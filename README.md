@@ -27,9 +27,9 @@
     
     Step-2: Import a new already-existing WAF policy configurations to statefile:
     ```sh
-    tf import -var-file="<WAF_RULE_1.tfvars>" -var-file="<WAF_RULE_2.tfvars>" ... module.<NEW_WAF_MODULE_NAME>.azurerm_cdn_frontdoor_firewall_policy.waf_policy <ARM_ID>
+    terraform import -var-file="<WAF_RULE_1.tfvars>" -var-file="<WAF_RULE_2.tfvars>" ... module.<NEW_WAF_MODULE_NAME>.azurerm_cdn_frontdoor_firewall_policy.waf_policy <ARM_ID>
     ```
-    > Example: `tf import -var-file="rules/prod_rules.tfvars" -var-file="rules/test_rules.tfvars" module.testpolicy01.azurerm_cdn_frontdoor_firewall_policy.waf_policy /subscriptions/12345/resourceGroups/rg-pva-test/providers/Microsoft.Network/frontDoorWebApplicationFirewallPolicies/testwafpolicy01`
+    > Example: `terraform import -var-file="rules/prod_rules.tfvars" -var-file="rules/test_rules.tfvars" module.testpolicy01.azurerm_cdn_frontdoor_firewall_policy.waf_policy /subscriptions/12345/resourceGroups/rg-pva-test/providers/Microsoft.Network/frontDoorWebApplicationFirewallPolicies/testwafpolicy01`
     
     > Note: This import step needs to be run only once, when you want to import the configurations of an existing resource to get managed by terraform for the first time. Provide the backend storage container details as required.
 
