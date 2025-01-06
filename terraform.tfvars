@@ -1,17 +1,22 @@
-##### WAF Policies - ADD/UPDATE based on requirement #####
+##### WAF POLICY VARIABLES #####
 
-test_waf_name = "testwafpolicy"
+# TEMPLATE:
+# your_waf_name = "<YOUR-WAF-POLICY-NAME>"
+
+test_waf_name = "testwafpolicy01"
 prod_waf_name = "prodwafpolicy"
 
 
 
 
 ##### COMMON PROPERTIES #####
-resource_group = "<your-resource-group>"
-location       = "<your-location>"
+resource_group = "rg-pva-test"
+location       = "westus2"
 
 tags = {
+  workload        = "azure_security"
   deployment_type = "terraform-managed"
+  environment     = "dev"
 }
 
 waf_mode = "Prevention"

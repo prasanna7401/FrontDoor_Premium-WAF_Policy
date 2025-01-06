@@ -1,5 +1,3 @@
-# These are SAMPLE RULES - MODIFY them based on your requirement.
-
 prod_rules = [
   # ALLOW IP SET
   {
@@ -12,7 +10,9 @@ prod_rules = [
     type                           = "MatchRule"
     match_conditions = [
       {
-        match_values       = ["8.8.8.8"]
+        match_values       = [
+          "8.8.8.8", "1.1.1.1", "100.100.100.100"
+          ]
         match_variable     = "RemoteAddr"
         negation_condition = false
         operator           = "IPMatch"
@@ -31,7 +31,9 @@ prod_rules = [
     type                           = "MatchRule"
     match_conditions = [
       {
-        match_values       = ["CA", "US"]
+        match_values       = [
+          "CA", "US"
+          ]
         match_variable     = "SocketAddr"
         negation_condition = false
         operator           = "GeoMatch"

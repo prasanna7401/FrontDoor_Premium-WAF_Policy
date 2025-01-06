@@ -1,0 +1,139 @@
+trigger: none
+  # batch: true
+  # branches:
+  #   include:
+  #     - main
+  # paths:
+  #   exclude:
+  #     - README.md
+  #     - .gitignore
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables: # Define variables at the pipeline level - Preferred
+  sc_name: 'WAF_TF' # UPDATE with your service connection name
+  environment: 'waf-test'
+
+stages:
+  - stage: tfvalidate
+    displayName: 'Validate & Plan'
+    jobs:
+      - job: Validate_and_Plan
+        displayName: 'Plan'
+        continueOnError: false
+
+        steps:
+          # - task: MicrosoftSecurityDevOps@1 # OPTIONAL: Uncomment to enable security scan
+          #   displayName: 'Security Scan'
+          #   inputs:
+          #     tools: 'terrascan'
+          #     break: true # Fail the pipeline if any High Severity issues are found
+
+          - task: TerraformInstaller@1
+            displayName: 'Tf Install'
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: AzureCLI@2
+            displayName: Set TF Credentials
+            inputs:
+              azureSubscription: $(sc_name)
+              addSpnToEnvironment: true
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+                Write-Host "##vso[task.setvariable variable=ARM_CLIENT_ID]$env:servicePrincipalId"
+                Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$env:tenantId"
+
+          - task: AzureCLI@2
+            displayName: 'TF Init'
+            inputs:
+              azureSubscription: $(sc_name)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                terraform init
+
+          - task: AzureCLI@2
+            displayName: 'Changes'
+            inputs:
+              azureSubscription: $(sc_name)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                terraform plan -input=false -lock=false -out=tfplan -var-file="waf_rules/test_rules.tfvars" -var-file="waf_rules/prod_rules.tfvars"
+
+          # Check for changes and warn if there are any (destroy, update, create)
+          - pwsh: |
+              terraform show -json tfplan > tfplan.json
+
+              $tfplan = Get-Content "tfplan.json" | ConvertFrom-Json
+              $actions = ($tfplan.resource_changes | Select-Object -ExpandProperty change | Select-Object -ExpandProperty actions | Select-Object -Unique).ToUpper().Trim()
+              $action = ($actions -split "\s+")[-1]
+              $message = "`n`nThis deployment will $action some resources."
+
+              if ($action -eq "DESTROY" -or $action -eq "UPDATE") {
+                  Write-Host "##vso[task.logissue type=warning]$action action detected!!! Pipeline requires manual approval to proceed. Please review TF Plan task in the pipeline for more details."
+              }
+
+              Write-Host "$message Check the TF PLAN task for more details."
+              Write-Host "##vso[task.setvariable variable=stage_action;isOutput=true]$action"
+            displayName: 'Action'
+            name: 'Changes'
+
+  - stage: tfapply
+    displayName: 'Deployment'
+    dependsOn: tfvalidate
+    condition: and(succeeded(), eq(dependencies.tfvalidate.outputs['Validate_and_Plan.Changes.stage_action'], 'UPDATE'))
+    jobs:
+      - deployment: Code_deploy
+        displayName: 'Deploy'
+        environment: $(deployment_environment)
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps: 
+                - checkout: self
+                
+                - task: TerraformInstaller@1
+                  displayName: 'Tf Install'
+                  inputs:
+                    terraformVersion: 'latest'
+
+                - task: AzureCLI@2
+                  displayName: Set TF Credentials
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    addSpnToEnvironment: true
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                      Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+                      Write-Host "##vso[task.setvariable variable=ARM_CLIENT_ID]$env:servicePrincipalId"
+                      Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                      Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$env:tenantId"
+
+                - task: AzureCLI@2
+                  displayName: 'TF Init'
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      terraform init
+
+                - task: AzureCLI@2
+                  displayName: 'TF Apply'
+                  inputs:
+                    azureSubscription: $(sc_name)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      terraform apply -var-file="waf_rules/test_rules.tfvars" -var-file="waf_rules/prod_rules.tfvars" -input=false -auto-approve -lock=false

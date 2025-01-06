@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.10.2"
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -6,12 +8,12 @@ terraform {
     }
   }
 
-  # backend "azurerm" {
-  #   resource_group_name  = "<your-resource-group>"
-  #   storage_account_name = "<your-storage-account>"
-  #   container_name       = "<your-container>"
-  #   key                  = "waf/pipeline.terraform.tfstate" # Modify based on your requirement
-  # }
+  backend "azurerm" {
+    resource_group_name  = "rg-pva-test"
+    storage_account_name = "tftestwaf"
+    container_name       = "tfstate"
+    key                  = "waf/pipeline.terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
