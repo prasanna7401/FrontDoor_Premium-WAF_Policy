@@ -1,0 +1,92 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - allowed_ip_csv/*.csv
+
+variables:
+  azureServiceConnection: '<your-service-connection>' # MODIFY THIS
+
+parameters:
+  - name: policies
+    displayName: 'Policies'
+    type: object
+    default:
+      - name: 'prodpolicy' # MODIFY THIS
+        resourceGroupName: '<prod-policy-resource-group>' # MODIFY THIS
+        customRuleName: '<your-rule-name>' # MODIFY THIS
+      - name: 'devtestpolicy' # MODIFY THIS
+        resourceGroupName: '<dev-policy-resource-group>' # MODIFY THIS
+        customRuleName: '<your-rule-name>' # MODIFY THIS>
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: ReviewAndCompare
+    displayName: "Change Review"
+    jobs:
+      - ${{ each policy in parameters.policies }}:
+        - job: ReviewIPs_${{ policy.name }}
+          displayName: "Review IPs for ${{ policy.name }}"
+          steps:
+            - checkout: self
+
+            - task: AzureCLI@2
+              displayName: 'Change Review'
+              inputs:
+                azureSubscription: $(azureServiceConnection)
+                scriptType: 'bash'
+                scriptLocation: 'scriptPath'
+                scriptPath: 'scripts/p1_review_ip_list.sh'
+                arguments: '--policyName ${{ policy.name }} --resourceGroupName ${{ policy.resourceGroupName }} --customRuleName ${{ policy.customRuleName }}'
+
+            - task: PublishPipelineArtifact@1
+              displayName: 'Publish Updated IP List Artifact for ${{ policy.name }}'
+              inputs:
+                targetPath: updatedIPs_${{ policy.name }}.json
+                artifactName: updatedIPsArtifact_${{ policy.name }}
+
+  - stage: DeployAllowedList
+    displayName: "Deploy Allowed IP List"
+    dependsOn: ReviewAndCompare
+    condition: succeeded()
+    jobs:
+      - ${{ each policy in parameters.policies }}:
+        - deployment: DeployIPs_${{ policy.name }}
+          displayName: "Deploy Updated IPs for ${{ policy.name }}"
+          pool:
+            vmImage: 'ubuntu-latest'
+          environment: FirewallUpdateApproval_WAF_${{ policy.name }}
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - checkout: self
+
+                  - script: |
+                      # Verify if Bicep file exists
+                      if [ -f "$(Build.SourcesDirectory)/iac/${{ policy.name }}.bicep" ]; then
+                        echo "Bicep file exists."
+                      else
+                        echo "Bicep file does not exist. Exiting."
+                        exit 1
+                      fi
+                    displayName: 'Check Bicep File'
+
+                  - download: current
+                    artifact: updatedIPsArtifact_${{ policy.name }}
+                    displayName: 'Download Updated IPs Artifact'
+
+                  - task: AzureCLI@2
+                    displayName: 'Update WAF Policy'
+                    inputs:
+                      azureSubscription: $(azureServiceConnection)
+                      scriptType: 'bash'
+                      scriptLocation: 'scriptPath'
+                      scriptPath: 'scripts/p1_deployment.sh'
+                      arguments: '--policyName ${{ policy.name }} --resourceGroupName ${{ policy.resourceGroupName }} --customRuleName ${{ policy.customRuleName }}'
+                    env:
+                      PIPELINE_DIR: $(Pipeline.Workspace)
