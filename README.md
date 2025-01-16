@@ -11,8 +11,8 @@
 
 ## Manage rules (Sample)
 
-1. [DevTestPolicy](./waf_rules/test_rules.tfvars)
-2. [ProdPolicy](./waf_rules/prod_rules.tfvars)
+1. [Dev-Policy](./waf_rules/test_rules.tfvars)
+2. [Prod-Policy](./waf_rules/prod_rules.tfvars)
 
 ## How to?
 

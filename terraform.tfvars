@@ -3,15 +3,15 @@
 # TEMPLATE:
 # your_waf_name = "<YOUR-WAF-POLICY-NAME>"
 
-test_waf_name = "testwafpolicy01"
+test_waf_name = "testwafpolicy"
 prod_waf_name = "prodwafpolicy"
 
 
 
 
 ##### COMMON PROPERTIES #####
-resource_group = "rg-pva-test"
-location       = "westus2"
+resource_group = "<YOUR-RESOURCE-GROUP-NAME>"
+location       = "<YOUR-LOCATION>"
 
 tags = {
   workload        = "azure_security"
